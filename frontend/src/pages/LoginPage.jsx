@@ -46,6 +46,25 @@ export default function LoginPage() {
     }
   }
 
+  const handleQuickLogin = async (email, password) => {
+    setForm({ email, password, rememberMe: true })
+    setLoading(true)
+    setError('')
+    try {
+      await login({ email, password })
+      navigate('/dashboard', { replace: true })
+    } catch (err) {
+      const msg =
+        err?.response?.data?.detail ||
+        err?.response?.data?.message ||
+        err?.message ||
+        'Quick login failed. Please try again.'
+      setError(typeof msg === 'string' ? msg : JSON.stringify(msg))
+    } finally {
+      setLoading(false)
+    }
+  }
+
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-900">
@@ -97,6 +116,32 @@ export default function LoginPage() {
               </motion.div>
             )}
           </AnimatePresence>
+
+          {/* Quick 1-Click Evaluation Logins */}
+          <div className="mb-6 p-4 rounded-xl bg-white/5 border border-white/10 backdrop-blur-sm">
+            <p className="text-xs font-semibold text-teal-400 uppercase tracking-wider mb-2.5 flex items-center justify-between">
+              <span>Quick Demo Access (1-Click)</span>
+              <span className="text-[10px] text-slate-400 bg-white/10 px-2 py-0.5 rounded">Pre-Seeded</span>
+            </p>
+            <div className="grid grid-cols-2 gap-2.5">
+              <button
+                type="button"
+                onClick={() => handleQuickLogin('demo@diabetesrisk.org', 'User@Diabetes2026')}
+                disabled={loading}
+                className="py-2.5 px-3 rounded-lg bg-teal-500/20 hover:bg-teal-500/30 border border-teal-400/40 text-teal-200 text-xs font-semibold transition-all flex items-center justify-center gap-1.5 shadow-sm"
+              >
+                <span>🩺 Demo Patient</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleQuickLogin('admin@diabetesrisk.org', 'Admin@Diabetes2026')}
+                disabled={loading}
+                className="py-2.5 px-3 rounded-lg bg-blue-500/20 hover:bg-blue-500/30 border border-blue-400/40 text-blue-200 text-xs font-semibold transition-all flex items-center justify-center gap-1.5 shadow-sm"
+              >
+                <span>🛡️ Admin Access</span>
+              </button>
+            </div>
+          </div>
 
           <form onSubmit={handleSubmit} className="space-y-5" noValidate>
             {/* Email */}

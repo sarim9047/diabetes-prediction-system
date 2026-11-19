@@ -118,11 +118,14 @@ export default function DashboardPage() {
       try {
         setLoading(true);
         const res = await dashboardApi.getStats();
-        // Map backend field names to frontend expectations
+        const data = res?.data || res || {};
         setStats({
-          ...res.data,
-          positive_count: res.data.high_risk_count || 0,
-          negative_count: res.data.low_risk_count || 0,
+          ...data,
+          total_predictions: data.total_predictions || 0,
+          positive_count: data.high_risk_count ?? data.positive_count ?? 0,
+          negative_count: data.low_risk_count ?? data.negative_count ?? 0,
+          recent_predictions: data.recent_predictions || [],
+          monthly_trends: data.monthly_trends || [],
         });
       } catch (err) {
         setError(err?.response?.data?.message || 'Failed to load dashboard data.');
@@ -140,12 +143,13 @@ export default function DashboardPage() {
     day: 'numeric',
   });
 
-  const latestResultLabel =
-    stats?.latest_prediction == null
-      ? '—'
-      : stats.latest_prediction === 1 || stats.latest_prediction === true
-      ? 'High Risk'
-      : 'Low Risk';
+  const latestResultLabel = (() => {
+    if (!stats?.latest_prediction) return '—';
+    if (typeof stats.latest_prediction === 'object') {
+      return stats.latest_prediction.classification_label || (stats.latest_prediction.prediction_result === 1 ? 'High Risk' : 'Low Risk');
+    }
+    return stats.latest_prediction === 1 || stats.latest_prediction === true ? 'High Risk' : 'Low Risk';
+  })();
 
   const pieData =
     stats && (stats.positive_count > 0 || stats.negative_count > 0)
@@ -395,7 +399,7 @@ export default function DashboardPage() {
                             {p.age ?? '—'}
                           </td>
                           <td className="py-3">
-                            <ResultBadge result={p.result} />
+                            <ResultBadge result={p.prediction_result ?? p.result} />
                           </td>
                           <td className="py-3">
                             <button

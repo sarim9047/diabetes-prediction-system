@@ -44,10 +44,17 @@ export default function PredictionResultPage() {
   const [downloading, setDownloading] = useState(false)
 
   useEffect(() => {
-    if (!id) return
+    if (!id || id === 'undefined') {
+      setError('Invalid prediction ID.')
+      setLoading(false)
+      return
+    }
     setLoading(true)
     predictionApi.getPredictionById(id)
-      .then(response => { setPrediction(response.data || response); setLoading(false) })
+      .then(response => {
+        setPrediction(response.data || response)
+        setLoading(false)
+      })
       .catch(err => {
         setError(err?.response?.data?.detail || 'Failed to load prediction result.')
         setLoading(false)
@@ -58,7 +65,8 @@ export default function PredictionResultPage() {
     if (!prediction) return
     setDownloading(true)
     try {
-      const blob = await reportApi.downloadPdf(prediction.id)
+      const res = await reportApi.downloadPdf(prediction.id)
+      const blob = res.data instanceof Blob ? res.data : new Blob([res.data], { type: 'application/pdf' })
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
@@ -66,7 +74,7 @@ export default function PredictionResultPage() {
       document.body.appendChild(a)
       a.click()
       a.remove()
-      URL.revokeObjectURL(url)
+      setTimeout(() => URL.revokeObjectURL(url), 1000)
     } catch {
       alert('Failed to download PDF. Please try again.')
     } finally {
@@ -108,7 +116,7 @@ export default function PredictionResultPage() {
     )
   }
 
-  const isPositive = prediction?.result === 1
+  const isPositive = prediction?.prediction_result === 1 || prediction?.result === 1
 
   // ── Result Card config ───────────────────────────────────────────────────
   const cardConfig = isPositive

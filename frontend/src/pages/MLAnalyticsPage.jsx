@@ -360,16 +360,11 @@ export default function MLAnalyticsPage() {
       .finally(() => setLoading(false))
   }, [])
 
-  // fetch images as authenticated blob URLs
-  const fetchViz = useCallback(async (name) => {
-    try {
-      const url = await fetchImageAsBlob(`/api/model/visualizations/${name}`)
-      setImages(prev => ({ ...prev, [name]: url }))
-    } catch {
-      setImages(prev => ({ ...prev, [name]: null }))
-    } finally {
-      setImgLoading(prev => ({ ...prev, [name]: false }))
-    }
+  // direct image URLs from FastAPI static endpoint
+  const fetchViz = useCallback((name) => {
+    const filename = name.endsWith('.png') ? name : `${name}.png`;
+    setImages(prev => ({ ...prev, [name]: `/api/model/visualizations/${filename}` }));
+    setImgLoading(prev => ({ ...prev, [name]: false }));
   }, [])
 
   useEffect(() => {

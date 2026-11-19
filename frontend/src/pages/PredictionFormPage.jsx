@@ -172,12 +172,48 @@ export default function PredictionFormPage() {
         payload[f.key] = parseFloat(formData[f.key])
       })
       const response = await predictionApi.predict(payload)
-      navigate(`/result/${response.id}`)
+      const predId = response?.data?.id ?? response?.id
+      if (predId) {
+        navigate(`/result/${predId}`)
+      } else {
+        throw new Error('Prediction was analyzed, but could not retrieve ID.')
+      }
     } catch (err) {
-      setApiError(err?.response?.data?.detail || err?.message || 'Prediction failed. Please try again.')
+      const msg = err?.response?.data?.detail || err?.response?.data?.message || err?.message || 'Prediction failed. Please try again.'
+      setApiError(typeof msg === 'string' ? msg : JSON.stringify(msg))
     } finally {
       setLoading(false)
     }
+  }
+
+  const fillSampleHighRisk = () => {
+    setFormData({
+      pregnancies: '6',
+      glucose: '168',
+      blood_pressure: '85',
+      skin_thickness: '38',
+      insulin: '240',
+      bmi: '38.5',
+      diabetes_pedigree_function: '0.85',
+      age: '54'
+    })
+    setErrors({})
+    setApiError(null)
+  }
+
+  const fillSampleLowRisk = () => {
+    setFormData({
+      pregnancies: '0',
+      glucose: '85',
+      blood_pressure: '70',
+      skin_thickness: '20',
+      insulin: '75',
+      bmi: '22.0',
+      diabetes_pedigree_function: '0.18',
+      age: '23'
+    })
+    setErrors({})
+    setApiError(null)
   }
 
   const getFieldState = (key) => {
@@ -228,6 +264,25 @@ export default function PredictionFormPage() {
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* Quick Sample Presets */}
+        <div className="flex flex-wrap items-center justify-center gap-3 mb-6">
+          <span className="text-white/60 text-xs font-semibold uppercase tracking-wider">Quick Test:</span>
+          <button
+            type="button"
+            onClick={fillSampleHighRisk}
+            className="px-3.5 py-1.5 rounded-lg bg-red-500/20 hover:bg-red-500/30 border border-red-400/40 text-red-200 text-xs font-semibold transition-all"
+          >
+            ⚠️ Fill High-Risk Case
+          </button>
+          <button
+            type="button"
+            onClick={fillSampleLowRisk}
+            className="px-3.5 py-1.5 rounded-lg bg-teal-500/20 hover:bg-teal-500/30 border border-teal-400/40 text-teal-200 text-xs font-semibold transition-all"
+          >
+            ✅ Fill Low-Risk Case
+          </button>
+        </div>
 
         {/* Form Card */}
         <motion.div

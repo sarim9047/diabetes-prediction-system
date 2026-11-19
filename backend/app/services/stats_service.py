@@ -6,7 +6,15 @@ from app.models.user import User
 from app.models.activity_log import ActivityLog
 from app.services.ml_service import ml_service
 
-def get_user_dashboard_stats(db: Session, user_id: int):
+def get_user_dashboard_stats(arg1, arg2):
+    # Support both (db, user_id) and (user_id, db) calling conventions
+    if isinstance(arg1, int):
+        user_id = arg1
+        db = arg2
+    else:
+        db = arg1
+        user_id = arg2
+
     # Total count
     total = db.query(Prediction).filter(Prediction.user_id == user_id).count()
     positive = db.query(Prediction).filter(Prediction.user_id == user_id, Prediction.prediction_result == 1).count()

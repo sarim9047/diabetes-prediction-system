@@ -61,6 +61,10 @@ def get_model_evaluation_metrics():
 
 @router.get("/visualizations/{chart_name}")
 def get_evaluation_chart(chart_name: str):
+    # Normalize chart name
+    if not chart_name.endswith(".png"):
+        chart_name = f"{chart_name}.png"
+
     allowed_charts = [
         "model_comparison.png",
         "confusion_matrix.png",
@@ -73,14 +77,21 @@ def get_evaluation_chart(chart_name: str):
             detail=f"Chart '{chart_name}' not recognized. Allowed: {allowed_charts}"
         )
 
-    file_path = os.path.join(settings.EVAL_RESULTS_DIR, chart_name)
-    if not os.path.exists(file_path):
-        # Fallback to models dir
-        file_path = os.path.join(settings.BASE_DIR, "models", chart_name)
-        if not os.path.exists(file_path):
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Visualization image '{chart_name}' not generated yet."
-            )
+    # Search in multiple potential locations for flexibility on Render vs Local
+    candidate_paths = [
+        os.path.join(settings.EVAL_RESULTS_DIR, chart_name),
+        os.path.join(settings.BASE_DIR, "models", chart_name),
+        os.path.join(settings.BASE_DIR, "backend", "ml", "evaluation_results", chart_name),
+        os.path.join(os.getcwd(), "models", chart_name),
+        os.path.join(os.getcwd(), "backend", "ml", "evaluation_results", chart_name),
+        os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "ml", "evaluation_results", chart_name)),
+    ]
 
-    return FileResponse(file_path, media_type="image/png")
+    for file_path in candidate_paths:
+        if os.path.exists(file_path):
+            return FileResponse(file_path, media_type="image/png")
+
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail=f"Visualization image '{chart_name}' not found on server."
+    )

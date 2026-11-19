@@ -1,17 +1,27 @@
 import React from 'react'
 import Sidebar from '../components/Sidebar'
+import Navbar from '../components/Navbar'
+import { useAuth } from '../context/AuthContext'
 
 export default function AppLayout({ children }) {
-  return (
-    <div className="flex min-h-screen">
-      {/* Sidebar — fixed width */}
-      <Sidebar />
+  const { isAuthenticated } = useAuth()
 
-      {/* Main content area */}
-      <main className="flex-1 overflow-y-auto bg-slate-50 dark:bg-slate-900 min-h-screen">
-        <div className="p-6">
+  if (!isAuthenticated) {
+    return (
+      <div className="flex flex-col min-h-screen bg-slate-900">
+        <Navbar />
+        <main className="flex-1 overflow-y-auto min-h-screen">
           {children}
-        </div>
+        </main>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex min-h-screen bg-slate-50 dark:bg-slate-900">
+      <Sidebar />
+      <main className="flex-1 overflow-y-auto min-h-screen p-6">
+        {children}
       </main>
     </div>
   )
